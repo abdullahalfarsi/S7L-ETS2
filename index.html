@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S7L</title>
+<style>
+:root{--bg:#000;--card:#0d0d0d;--tx:#f3e9c6;--mut:#9a8a55;--ac:#ffd24a;--bd:#4a3b10}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,Segoe UI,Tahoma,sans-serif;padding:16px;max-width:900px;margin-inline:auto}
+h1{color:var(--ac);font-size:26px;letter-spacing:3px;margin:0 0 4px;text-shadow:0 0 12px rgba(255,210,74,.35)}
+.sub{color:var(--mut);font-size:13px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:12px}
+.card h2{font-size:15px;margin:0 0 10px;color:var(--ac)}
+button,select,input{font:inherit;color:var(--tx);background:#161616;border:1px solid var(--bd);border-radius:8px;padding:8px 10px}
+button{cursor:pointer;background:linear-gradient(135deg,#ffd24a,#c8920a);color:#000;border:0;font-weight:700}
+button.s{background:#1c1704;color:var(--ac);border:1px solid var(--bd);font-weight:400}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+.row label{min-width:110px;color:var(--mut);font-size:14px}
+input[type=number]{width:170px}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px}
+.g div{display:flex;justify-content:space-between;align-items:center;gap:6px;background:#161616;border:1px solid var(--bd);border-radius:8px;padding:5px 8px;font-size:13px}
+.g select{padding:3px;width:62px}
+.hide{display:none}
+.note{font-size:12px;color:var(--mut);line-height:1.7}
+.warn{color:#ff7b7b}
+#msg{font-size:13px;margin:6px 0}
+
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes shine{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 rgba(255,210,74,0)}50%{box-shadow:0 0 18px rgba(255,210,74,.35)}}
+@keyframes pop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+@keyframes drift{0%{background-position:0 0}100%{background-position:0 400px}}
+body{background:radial-gradient(ellipse at 50% -10%,#1d1603 0,#000 55%) fixed,var(--bg)}
+h1{background:linear-gradient(90deg,#8a6508,#ffd24a,#fff2b8,#ffd24a,#8a6508);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:none;animation:shine 4s linear infinite,rise .7s both}
+.sub{animation:rise .7s .1s both}
+.card{animation:rise .6s both;transition:border-color .25s,transform .25s,box-shadow .25s}
+.card:hover{border-color:#8a6a14;transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,210,74,.08)}
+body>.card{animation-delay:.2s}
+#ed>.card:nth-child(1){animation-delay:.05s}
+#ed>.card:nth-child(2){animation-delay:.15s}
+#ed>.card:nth-child(3){animation-delay:.25s}
+#ed>.card:nth-child(4){animation-delay:.35s}
+#ed>.card:nth-child(5){animation-delay:.45s}
+button{transition:transform .15s,filter .2s,box-shadow .2s}
+button:hover{transform:translateY(-2px);filter:brightness(1.12);box-shadow:0 6px 16px rgba(255,210,74,.25)}
+button:active{transform:scale(.96)}
+#dl{animation:glow 2.6s ease-in-out infinite}
+input,select{transition:border-color .2s,box-shadow .2s,background .2s}
+input:focus,select:focus{outline:0;border-color:var(--ac);box-shadow:0 0 0 3px rgba(255,210,74,.18)}
+.g div{transition:transform .2s,border-color .2s,background .2s;animation:pop .4s both}
+.g div:hover{transform:translateY(-2px) scale(1.03);border-color:var(--ac);background:#1d1707}
+#msg:not(:empty){animation:pop .35s both}
+#pick:not(.hide){animation:rise .45s both}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.sl{display:grid;gap:6px;max-height:320px;overflow:auto}
+.sv{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:start;background:#161616;color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:9px 12px;font-weight:400;animation:pop .35s both}
+.sv:hover{border-color:var(--ac);background:#1d1707}
+.sv.on{border-color:var(--ac);background:#241b05;box-shadow:0 0 0 2px rgba(255,210,74,.2)}
+.sv b{color:var(--ac);font-weight:700}
+.sv small{color:var(--mut);font-size:12px}
+</style>
+</head>
+<body>
+<h1>S7L</h1>
+<div class="sub">محرر حفظ ETS2 — يشتغل كله على جهازك داخل المتصفح، ما ينرفع شي لأي مكان.</div>
+
+<div class="card">
+<h2>١) اختار المجلد</h2>
+<div class="note">اختار مجلد اللعبة أو مجلد البروفايلات، وتطلع لك كل النسخ الموجودة تلقائي:<br>
+<code dir="ltr">Documents\Euro Truck Simulator 2</code><br>
+(أو مجلد <code dir="ltr">steam_profiles</code> إذا تلعب من ستيم كلاود. وإذا اخترت مجلد <code dir="ltr">save</code> أو البروفايل مباشرة يشتغل بعد.)</div>
+<div class="row" style="margin-top:10px"><input type="file" id="dir" webkitdirectory multiple></div>
+<div id="msg"></div>
+<div class="hide" id="pick"><div class="sl" id="savelist"></div></div>
+</div>
+
+<div id="ed" class="hide">
+<div class="card">
+<h2>٢) اللفل والفلوس (إدخال يدوي)</h2>
+<div class="row"><label>الخبرة (XP)</label><input type="number" id="xp" min="0" placeholder="اكتب الخبرة">
+</div>
+<div class="note" style="margin:-2px 0 8px">اكتب الرقم اللي تبيه بنفسك. اللفل تحسبه اللعبة من الـXP (كل ما زدت XP يرتفع اللفل).</div>
+<div class="row"><label>الفلوس (€)</label><input type="number" id="money" min="0" placeholder="اكتب المبلغ">
+</div>
+</div>
+
+<div class="card">
+<h2>٣) المهارات</h2>
+<div class="row"><label>ADR (0-63)</label><input type="number" id="adr" min="0" max="63"><button class="s" id="adrmax">الكل</button></div>
+<div class="row"><label>مسافات طويلة</label><input type="number" id="long_dist" min="0" max="6"></div>
+<div class="row"><label>حمولة ثقيلة</label><input type="number" id="heavy" min="0" max="6"></div>
+<div class="row"><label>بضاعة هشة</label><input type="number" id="fragile" min="0" max="6"></div>
+<div class="row"><label>توصيل عاجل</label><input type="number" id="urgent" min="0" max="6"></div>
+<div class="row"><label>ميكانيكا</label><input type="number" id="mechanical" min="0" max="6"></div>
+<button class="s" id="skmax">كل المهارات ماكس</button>
+</div>
+
+<div class="card">
+<h2>٤) الكراجات</h2>
+<div class="row"><button class="s" id="gall">كل الكراجات → 3</button><span class="note">0 = غير مملوك، الأرقام الأعلى = أكبر حجم</span></div>
+<div class="g" id="gar"></div>
+</div>
+
+<div class="card">
+<h2>٥) الخريطة</h2>
+<div class="row"><label><input type="checkbox" id="cities"> فتح كل المدن (visited cities)</label></div>
+<div class="note">يضيف مدن اللعبة الأساسية لقائمة المدن المزارة. أي اسم ما تعرفه نسختك يتجاهله.</div>
+</div>
+
+<div class="card">
+<button id="dl" style="width:100%;padding:12px">تنزيل game.sii المعدّل</button>
+<div class="note" style="margin-top:8px">
+١- سوّ <b>نسخة احتياطية</b> من المجلد أول.<br>
+٢- حط الملف المنزّل داخل نفس مجلد الحفظ بدل <code>game.sii</code> القديم.<br>
+٣- اللعبة لازم تكون مقفولة وقت النسخ، وبعدها حمّل الحفظ.</div>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const CITIES="berlin hamburg bremen hannover dortmund duisburg dusseldorf koln frankfurt stuttgart munchen nurnberg leipzig dresden kassel magdeburg rostock kiel lubeck erfurt osnabruck mannheim salzburg wien graz linz innsbruck klagenfurt praha brno ostrava plzen bratislava kosice budapest gyor pecs szeged debrecen warszawa poznan wroclaw katowice krakow lodz gdansk szczecin bydgoszcz bialystok lublin olsztyn rzeszow paris lyon marseille lille bordeaux toulouse nantes rennes strasbourg dijon reims rouen calais le_havre brest nice grenoble clermont_ferrand limoges metz orleans amiens caen bruxelles antwerp liege gent brugge charleroi amsterdam rotterdam den_haag utrecht groningen eindhoven luxembourg london manchester birmingham liverpool leeds sheffield newcastle edinburgh glasgow cardiff bristol southampton dover felixstowe harwich hull plymouth nottingham cambridge carlisle aberdeen milano torino genova roma napoli bologna firenze venezia verona bari palermo catania trieste bolzano trento ancona pescara perugia cagliari taranto reggio_di_calabria madrid barcelona valencia sevilla zaragoza malaga bilbao vigo a_coruna san_sebastian pamplona murcia granada cordoba valladolid algeciras lisboa porto faro coimbra bern zurich geneve basel lausanne lugano luzern kobenhavn aarhus aalborg odense esbjerg stockholm goteborg malmo orebro jonkoping oslo bergen stavanger kristiansand helsinki turku tampere oulu vaasa kuopio tallinn tartu parnu riga liepaja daugavpils vilnius kaunas klaipeda siauliai panevezys".split(" ");
+const SK=["adr","long_dist","heavy","fragile","urgent","mechanical"];
+let groups={},txt="",gnames=[];
+
+function msg(t,bad){$("msg").innerHTML=bad?'<span class="warn">'+t+'</span>':t}
+
+const SII_KEY=new Uint8Array([0x2a,0x5f,0xcb,0x17,0x91,0xd2,0x2f,0xb6,0x02,0x45,0xb3,0xd8,0x36,0x9e,0xd0,0xb2,0xc2,0x73,0x71,0x56,0x3f,0xbf,0x1f,0x3c,0x9e,0xdf,0x6b,0x11,0x82,0x5a,0x5d,0x0a]);
+async function inflateTry(u){
+  for(let k=0;k<=16&&k<u.length;k++){
+    try{
+      const ds=new DecompressionStream("deflate");
+      const w=ds.writable.getWriter();
+      w.write(u.slice(0,u.length-k)).catch(()=>{});w.close().catch(()=>{});
+      const out=await new Response(ds.readable).arrayBuffer();
+      if(out.byteLength)return out;
+    }catch(e){}
+  }
+  return null;
+}
+async function decSii(buf){
+  const u=new Uint8Array(buf);
+  if(u.length<72)return null;
+  const iv=u.slice(36,52);
+  let ct=u.slice(56);
+  ct=ct.slice(0,ct.length-ct.length%16);
+  if(!ct.length)return null;
+  const key=await crypto.subtle.importKey("raw",SII_KEY,"AES-CBC",false,["encrypt","decrypt"]);
+  const pad=new Uint8Array(await crypto.subtle.encrypt({name:"AES-CBC",iv:ct.slice(ct.length-16)},key,new Uint8Array(0)));
+  const full=new Uint8Array(ct.length+16);full.set(ct);full.set(pad.slice(0,16),ct.length);
+  let pt;
+  try{pt=new Uint8Array(await crypto.subtle.decrypt({name:"AES-CBC",iv},key,full))}catch(e){return null}
+  const out=await inflateTry(pt);
+  return out?new Uint8Array(out):null;
+}
+
+const TOKCH="0123456789abcdefghijklmnopqrstuvwxyz_";
+function tokDec(v){let s="";for(let i=0;i<13&&v>0n;i++){const d=Number(v%38n);v/=38n;if(!d)break;s+=TOKCH[d-1]}return s}
+function tokEnc(s){if(!s||s.length>12||/[^0-9a-z_]/.test(s))return null;let v=0n,m=1n;for(const c of s){v+=BigInt(TOKCH.indexOf(c)+1)*m;m*=38n}return v}
+const INTSZ=(c,x)=>({0x25:4,0x27:4,0x29:2,0x2b:x.s2b,0x31:8,0x33:8})[c];
+function parseBsii(u,x){
+  const n=u.length,dv=new DataView(u.buffer,u.byteOffset,n),td=new TextDecoder();
+  let o=8;const structs={},blocks=[];
+  const need=k=>{if(o+k>n)throw 0};
+  const u8=()=>{need(1);return dv.getUint8(o++)};
+  const u32=()=>{need(4);const v=dv.getUint32(o,true);o+=4;return v};
+  const u64=()=>{need(8);const v=dv.getBigUint64(o,true);o+=8;return v};
+  const str=()=>{const l=u32();if(l>1e6)throw 0;need(l);const s=td.decode(u.subarray(o,o+l));o+=l;return s};
+  const idv=()=>{const c=u8();if(c===255){u64();return "_nameless"}const p=[];for(let i=0;i<c;i++)p.push(tokDec(u64()));return p.join(".")};
+  const fixed={0x03:8,0x05:4,0x07:x.s07,0x09:12,0x11:x.s11,0x17:16,0x19:x.s19,0x1b:32,0x25:4,0x27:4,0x29:2,0x2b:x.s2b,0x31:8,0x33:8,0x35:1,0x37:4};
+  function elem(b){
+    if(b===1){str();return}
+    if(b===0x39||b===0x3b||b===0x3d||b===0x3f){idv();return}
+    const z=fixed[b];if(!z)throw 0;need(z);o+=z;
+  }
+  function val(t){
+    if(t&1){elem(t);return}
+    const c=u32();if(c>5e6)throw 0;
+    for(let i=0;i<c;i++)elem(t-1);
+  }
+  if(u.length<12||td.decode(u.subarray(0,4))!=="BSII")throw 0;
+  let ver=dv.getUint32(4,true);o=8;
+  while(o<n){
+    const bt=u32();
+    if(bt===0){
+      const valid=u8();
+      if(!valid){break}
+      const sid=u32(),name=str(),fields=[];
+      for(;;){
+        const t=u32();if(t===0)break;
+        const fn=str();
+        if(t===0x37||t===0x38){
+          const cnt=u32();if(cnt>1e5)throw 0;
+          for(let i=0;i<cnt;i++){if(x.eo===0){u32();str()}else{str();u32()}}
+        }
+        fields.push({t,n:fn});
+        if(fields.length>2000)throw 0;
+      }
+      structs[sid]={name,fields};
+    }else{
+      const sid=bt,st=structs[sid];if(!st)throw 0;
+      const b0=o-4,id=idv(),f={};
+      for(const fd of st.fields){const s=o;val(fd.t);f[fd.n]={t:fd.t,s,e:o}}
+      blocks.push({sid,sn:st.name,id,f,s:b0,e:o});
+    }
+  }
+  if(o!==n)throw 0;
+  return{blocks,structs,x,dv,u};
+}
+function bsiiParse(u){
+  for(const s19 of [28,32])for(const s07 of [8,12,16])for(const s11 of [12,8])for(const s2b of [2,4])for(const eo of [0,1]){
+    try{return parseBsii(u,{s19,s07,s11,s2b,eo})}catch(e){}
+  }
+  return null;
+}
+function bFind(p,name){for(const b of p.blocks)if(b.f[name])return {b,fd:b.f[name]};return null}
+function bGetInt(p,name){
+  const r=bFind(p,name);if(!r)return null;const z=INTSZ(r.fd.t,p.x);if(!z)return null;
+  const dv=p.dv,s=r.fd.s;
+  return z===4?dv.getUint32(s,true):z===2?dv.getUint16(s,true):Number(dv.getBigUint64(s,true));
+}
+function bClamp(z,v){v=Math.max(0,Math.floor(+v||0));return z===4?Math.min(v,2147483647):z===2?Math.min(v,65535):v}
+function bSetInt(u,p,name,v,edits){
+  const r=bFind(p,name);if(!r)return false;const z=INTSZ(r.fd.t,p.x);if(!z)return false;
+  const a=new Uint8Array(z),d=new DataView(a.buffer);v=bClamp(z,v);
+  if(z===4)d.setUint32(0,v>>>0,true);else if(z===2)d.setUint16(0,v&65535,true);else d.setBigUint64(0,BigInt(v),true);
+  edits.push({s:r.fd.s,e:r.fd.e,a});return true;
+}
+function bGarages(p){
+  const out=[];
+  for(const b of p.blocks){
+    if(b.sn!=="garage"||!b.f.status||!INTSZ(b.f.status.t,p.x))continue;
+    const z=INTSZ(b.f.status.t,p.x),st=z===4?p.dv.getUint32(b.f.status.s,true):z===2?p.dv.getUint16(b.f.status.s,true):Number(p.dv.getBigUint64(b.f.status.s,true));
+    out.push({id:b.id,st,b});
+  }
+  return out;
+}
+function bCities(p){
+  const a=bFind(p,"visited_cities"),c=bFind(p,"visited_cities_count");
+  if(!a||!c)return null;
+  const ta=a.fd.t,tc=c.fd.t;
+  if(ta!==0x04&&ta!==0x02)return null;
+  const cz={0x26:4,0x28:4,0x2a:2,0x2c:2}[tc];if(!cz)return null;
+  // existing names
+  const have=[];let o=a.fd.s;const cnt=p.dv.getUint32(o,true);o+=4;
+  for(let i=0;i<cnt;i++){
+    if(ta===0x04){have.push(tokDec(p.dv.getBigUint64(o,true)));o+=8}
+    else{const l=p.dv.getUint32(o,true);o+=4;have.push(new TextDecoder().decode(p.u.subarray(o,o+l)));o+=l}
+  }
+  if(have.some(h=>/[^0-9a-z_]/.test(h)))return null;
+  return{a,c,ta,cz,have};
+}
+function bPatch(u,p,vals,cityList){
+  const edits=[];
+  bSetInt(u,p,"experience_points",vals.xp,edits);
+  bSetInt(u,p,"money_account",vals.money,edits);
+  for(const k of ["adr","long_dist","heavy","fragile","urgent","mechanical"])bSetInt(u,p,k,vals[k],edits);
+  for(const g of vals.garages){
+    const f=g.b.f.status,z=INTSZ(f.t,p.x),a=new Uint8Array(z),d=new DataView(a.buffer);
+    if(z===4)d.setUint32(0,g.v,true);else if(z===2)d.setUint16(0,g.v,true);else d.setBigUint64(0,BigInt(g.v),true);
+    edits.push({s:f.s,e:f.e,a});
+  }
+  if(cityList){
+    const ci=bCities(p);if(!ci)throw new Error("cities");
+    const all=[...new Set([...ci.have,...cityList])].filter(c=>ci.ta===0x02||tokEnc(c)!==null);
+    const A=new Uint8Array(4+all.reduce((s,c)=>s+(ci.ta===0x04?8:4+new TextEncoder().encode(c).length),0));
+    const ad=new DataView(A.buffer);ad.setUint32(0,all.length,true);let o=4;
+    for(const c of all){
+      if(ci.ta===0x04){ad.setBigUint64(o,tokEnc(c),true);o+=8}
+      else{const e=new TextEncoder().encode(c);ad.setUint32(o,e.length,true);o+=4;A.set(e,o);o+=e.length}
+    }
+    const C=new Uint8Array(4+all.length*ci.cz),cd=new DataView(C.buffer);cd.setUint32(0,all.length,true);
+    for(let i=0;i<all.length;i++){if(ci.cz===4)cd.setUint32(4+i*4,1,true);else cd.setUint16(4+i*2,1,true)}
+    edits.push({s:ci.a.fd.s,e:ci.a.fd.e,a:A});edits.push({s:ci.c.fd.s,e:ci.c.fd.e,a:C});
+  }
+  edits.sort((x,y)=>y.s-x.s);
+  for(let i=1;i<edits.length;i++)if(edits[i].e>edits[i-1].s)throw new Error("overlap");
+  let out=u;
+  for(const e of edits){const r=new Uint8Array(out.length-(e.e-e.s)+e.a.length);r.set(out.subarray(0,e.s));r.set(e.a,e.s);r.set(out.subarray(e.e),e.s+e.a.length);out=r}
+  return out;
+}
+
+let cur="";
+const dirTxt=new TextDecoder();
+function profName(id){
+  if(/^([0-9a-f]{2})+$/i.test(id)){
+    try{const b=new Uint8Array(id.match(/../g).map(h=>parseInt(h,16)));return new TextDecoder("utf-8",{fatal:true}).decode(b)}catch(e){}
+  }
+  return id;
+}
+async function readSii(file){
+  const buf=await file.arrayBuffer();
+  const h=dirTxt.decode(buf.slice(0,4));
+  if(h==="ScsC"){const d=await decSii(buf);return d?dirTxt.decode(d):null}
+  return dirTxt.decode(buf);
+}
+$("dir").onchange=async e=>{
+  groups={};cur="";$("ed").classList.add("hide");
+  for(const f of e.target.files){
+    const p=f.webkitRelativePath.split("/");
+    const n=p[p.length-1].toLowerCase();
+    if(n!=="game.sii"&&n!=="info.sii")continue;
+    const k=p.slice(0,-1).join("/");
+    (groups[k]=groups[k]||{})[n]=f;
+  }
+  const list=$("savelist");list.innerHTML="";
+  const keys=Object.keys(groups).filter(k=>groups[k]["game.sii"]);
+  keys.sort((a,b)=>groups[b]["game.sii"].lastModified-groups[a]["game.sii"].lastModified);
+  if(!keys.length){msg("ما لقيت ملفات حفظ (game.sii). تأكد إنك اخترت مجلد اللعبة أو البروفايل.",1);$("pick").classList.add("hide");return}
+  for(const k of keys){
+    const segs=k.split("/");
+    let si=segs.map(x=>x.toLowerCase()).lastIndexOf("save");
+    const prof=profName(si>0?segs[si-1]:(segs[segs.length-2]||""));
+    const folder=segs[segs.length-1];
+    let name=folder;
+    if(groups[k]["info.sii"]){
+      try{
+        const t=await readSii(groups[k]["info.sii"]);
+        const m=t&&t.match(/^\s*name:\s*"?([^"\n\r]+)"?/m);
+        if(m)name=m[1];
+      }catch(err){}
+    }
+    const d=new Date(groups[k]["game.sii"].lastModified);
+    const b=document.createElement("button");
+    b.className="sv";b.dataset.k=k;
+    const l=document.createElement("span");
+    const nb=document.createElement("b");nb.textContent=name;
+    const sm=document.createElement("small");sm.textContent="  "+prof+" / "+folder;
+    l.appendChild(nb);l.appendChild(sm);
+    const r=document.createElement("small");r.textContent=d.toLocaleDateString()+" "+d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+    b.appendChild(l);b.appendChild(r);
+    b.onclick=()=>openSave(k,b);
+    list.appendChild(b);
+  }
+  msg("لقيت "+keys.length+" نسخة، اختار وحدة.");
+  $("pick").classList.remove("hide");
+};
+
+let mode="txt",bin=null,bp=null;
+function addGarage(id,st){
+  gnames.push(id);
+  const d=document.createElement("div");
+  d.innerHTML="<span>"+id.replace("garage.","")+"</span><select data-g='"+id+"'>"+[0,1,2,3].map(v=>"<option"+(v==st?" selected":"")+">"+v+"</option>").join("")+"</select>";
+  $("gar").appendChild(d);
+}
+async function openSave(k,btn){
+  document.querySelectorAll(".sv").forEach(x=>x.classList.remove("on"));
+  btn.classList.add("on");
+  $("ed").classList.add("hide");cur="";
+  const f=groups[k]["game.sii"];
+  const buf=await f.arrayBuffer();
+  let bytes=new Uint8Array(buf),wasEnc=false;
+  if(dirTxt.decode(bytes.slice(0,4))==="ScsC"){
+    wasEnc=true;
+    const d=await decSii(buf);
+    if(!d){msg("هذا الحفظ <b>مشفّر</b> وما قدرت أفكه تلقائي. افتح <code>config.cfg</code> وغيّر <code>uset g_save_format \"2\"</code>، ادخل اللعبة واحفظ نسخة جديدة، وبعدها اخترها هنا. (أو فكّه بأداة SII Decrypt)",1);return}
+    bytes=d;
+  }
+  gnames=[];$("gar").innerHTML="";
+  if(dirTxt.decode(bytes.slice(0,4))==="BSII"){
+    const p=bsiiParse(bytes);
+    if(!p||bGetInt(p,"experience_points")===null||bGetInt(p,"money_account")===null){
+      msg("هذا الحفظ بصيغة <b>ثنائية</b> وما قدرت أقراه. غيّر <code>uset g_save_format \"2\"</code> في <code>config.cfg</code> واحفظ نسخة جديدة بالعبة، وبعدها اخترها هنا.",1);return}
+    mode="bin";bin=bytes;bp=p;txt="";
+    $("xp").value=bGetInt(p,"experience_points");
+    $("money").value=bGetInt(p,"money_account");
+    SK.forEach(s=>{const v=bGetInt(p,s);$(s).value=v===null?"":v});
+    bGarages(p).forEach(g=>addGarage(g.id,g.st));
+    cur=k;
+    $("ed").classList.remove("hide");
+    msg("تم فتح النسخة ("+gnames.length+" كراج) — صيغتها ثنائية"+(wasEnc?" ومشفّرة":"")+"، والملف المعدّل يطلع غير مشفّر واللعبة تقراه عادي.");
+    return;
+  }
+  mode="txt";bin=null;bp=null;
+  txt=dirTxt.decode(bytes);
+  if(!/experience_points:/.test(txt)){msg("الملف ما يبدو حفظ ETS2 صحيح.",1);return}
+  cur=k;
+  const g=r=>{const m=txt.match(r);return m?m[1]:""};
+  $("xp").value=g(/experience_points:\s*(\d+)/);
+  $("money").value=g(/money_account:\s*(\d+)/);
+  SK.forEach(s=>$(s).value=g(new RegExp("^\\s*"+s+":\\s*(\\d+)","m")));
+  const re=/^garage\s*:\s*(garage\.\w+)\s*\{[\s\S]*?^\}/gm;let m;
+  while((m=re.exec(txt))){
+    addGarage(m[1],(m[0].match(/status:\s*(\d+)/)||[0,0])[1]);
+  }
+  $("ed").classList.remove("hide");
+  msg("تم فتح النسخة ("+gnames.length+" كراج)"+(wasEnc?" — كانت مشفّرة وانفكّت تلقائي، والملف المعدّل يطلع غير مشفّر واللعبة تقراه عادي.":"."));
+}
+
+$("adrmax").onclick=()=>$("adr").value=63;
+$("skmax").onclick=()=>{$("adr").value=63;SK.slice(1).forEach(s=>$(s).value=6)};
+$("gall").onclick=()=>document.querySelectorAll("[data-g]").forEach(s=>s.value=3);
+
+function dlBin(){
+  try{
+    const gmap={};bGarages(bp).forEach(g=>gmap[g.id]=g.b);
+    const gs=[];
+    document.querySelectorAll("[data-g]").forEach(sel=>{const b=gmap[sel.dataset.g];if(b)gs.push({b,v:+sel.value})});
+    const vals={xp:+$("xp").value||0,money:+$("money").value||0,garages:gs};
+    SK.forEach(s=>vals[s]=+$(s).value||0);
+    let cl=null,note="";
+    if($("cities").checked){if(bCities(bp))cl=bGarages(bp).map(g=>g.id.replace("garage.",""));else note=" (فتح المدن ما انطبق على هذي النسخة)"}
+    const out=bPatch(bin,bp,vals,cl);
+    const q=bsiiParse(out);
+    const zc=n=>INTSZ(bFind(q,n).fd.t,q.x);
+    if(!q||bGetInt(q,"experience_points")!==bClamp(zc("experience_points"),vals.xp)||bGetInt(q,"money_account")!==bClamp(zc("money_account"),vals.money))throw new Error("verify");
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([out],{type:"application/octet-stream"}));
+    a.download="game.sii";a.click();
+    msg("تم التنزيل. حط الملف في: <code dir=\"ltr\">"+cur+"</code> بدل game.sii القديم. لا تنسى النسخة الاحتياطية."+note);
+  }catch(e){msg("ما قدرت أجهز الملف بشكل آمن، ما نزّلت شي. غيّر <code>g_save_format \"2\"</code> في <code>config.cfg</code> وجرب نسخة جديدة.",1)}
+}
+$("dl").onclick=()=>{
+  if(mode==="bin")return dlBin();
+  let t=txt;
+  t=t.replace(/(experience_points:\s*)\d+/,"$1"+(+$("xp").value||0));
+  t=t.replace(/(money_account:\s*)\d+/,"$1"+(+$("money").value||0));
+  SK.forEach(s=>{t=t.replace(new RegExp("(^\\s*"+s+":\\s*)\\d+","m"),"$1"+(+$(s).value||0))});
+  document.querySelectorAll("[data-g]").forEach(sel=>{
+    const id=sel.dataset.g.replace(".","\\.");
+    const re=new RegExp("(^garage\\s*:\\s*"+id+"\\s*\\{[\\s\\S]*?status:\\s*)\\d+","m");
+    t=t.replace(re,"$1"+sel.value);
+  });
+  if($("cities").checked){
+    const have=[...t.matchAll(/^\s*visited_cities\[\d+\]:\s*(\S+)/gm)].map(m=>m[1]);
+    const gc=[...t.matchAll(/^garage\s*:\s*garage\.(\w+)/gm)].map(m=>m[1]);
+    const all=[...new Set([...have,...(gc.length?gc:CITIES)])];
+    t=t.replace(/^\s*visited_cities(_count)?(\[\d+\])?:.*\r?\n/gm,"");
+    let ins=" visited_cities: "+all.length+"\n";
+    all.forEach((c,i)=>ins+=" visited_cities["+i+"]: "+c+"\n");
+    ins+=" visited_cities_count: "+all.length+"\n";
+    all.forEach((c,i)=>ins+=" visited_cities_count["+i+"]: 1\n");
+    t=t.replace(/(^economy\s*:\s*\S+\s*\{\r?\n)/m,"$1"+ins);
+  }
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([t],{type:"text/plain"}));
+  a.download="game.sii";a.click();
+  msg("تم التنزيل. حط الملف في: <code dir=\"ltr\">"+cur+"</code> بدل game.sii القديم. لا تنسى النسخة الاحتياطية.");
+};
+</script>
+</body>
+</html>
